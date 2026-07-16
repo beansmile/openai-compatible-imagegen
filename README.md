@@ -9,28 +9,64 @@ Works with Claude Code and Codex CLI.
 
 ## Quick Install
 
-Copy (or clone) this directory into your agent's skills folder:
+### Option A — one-liner
 
-**Claude Code** (personal, available in every project):
+```bash
+curl -fsSL https://raw.githubusercontent.com/beansmile/openai-compatible-imagegen/main/install.sh | bash
+```
+
+The installer auto-detects Claude Code and/or Codex CLI and installs into
+every harness it finds. To pick explicitly, append flags (combinable):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/beansmile/openai-compatible-imagegen/main/install.sh | bash -s -- --claude    # ~/.claude/skills/
+curl -fsSL https://raw.githubusercontent.com/beansmile/openai-compatible-imagegen/main/install.sh | bash -s -- --codex     # ${CODEX_HOME:-~/.codex}/skills/
+curl -fsSL https://raw.githubusercontent.com/beansmile/openai-compatible-imagegen/main/install.sh | bash -s -- --project   # ./.claude/skills/ (this project only)
+```
+
+Re-running the installer updates an existing install (`git pull`).
+
+### Option B — let your agent install it
+
+Paste this into your Claude Code / Codex session:
+
+> Install the agent skill from
+> https://github.com/beansmile/openai-compatible-imagegen — fetch its README
+> and follow the "For AI agents" section.
+
+### Option C — manual
+
+Clone into your harness's skills folder yourself:
+
+| Harness | Destination |
+| --- | --- |
+| Claude Code (personal) | `~/.claude/skills/openai-compatible-imagegen` |
+| Claude Code (this project) | `.claude/skills/openai-compatible-imagegen` |
+| Codex CLI | `${CODEX_HOME:-$HOME/.codex}/skills/openai-compatible-imagegen` |
 
 ```bash
 git clone https://github.com/beansmile/openai-compatible-imagegen.git ~/.claude/skills/openai-compatible-imagegen
 ```
 
-or, for a single project:
-
-```bash
-git clone https://github.com/beansmile/openai-compatible-imagegen.git .claude/skills/openai-compatible-imagegen
-```
-
-**Codex CLI:**
-
-```bash
-git clone https://github.com/beansmile/openai-compatible-imagegen.git "${CODEX_HOME:-$HOME/.codex}/skills/openai-compatible-imagegen"
-```
-
 Already have the repo locally? `cp -R` it to the same destination instead of
 cloning.
+
+### For AI agents
+
+If you are an AI agent installing this skill on a user's behalf:
+
+1. Pick the destination from the table above based on the harness you are
+   running in (personal install unless the user asked for project-level).
+2. Run: `git clone --depth 1 https://github.com/beansmile/openai-compatible-imagegen.git <destination>`
+   — or, if the destination already exists as a git checkout, `git -C <destination> pull --ff-only`.
+3. Verify: `python3 -m unittest discover <destination>/tests` should report all
+   tests passing.
+4. Check credentials **without printing their values**:
+   `[[ -n "$OPENAI_BASE_URL" && -n "$OPENAI_API_KEY" ]]`. If either is missing,
+   show the user the `export` lines from "Configure Credentials" below and ask
+   them to set the variables locally — never ask them to paste a key into chat.
+5. Tell the user the skill is installed and, if needed, that they should
+   restart the session so the new skill and environment variables are picked up.
 
 ## Configure Credentials
 
