@@ -63,8 +63,13 @@ The client calls `<OPENAI_BASE_URL>/images/generations` and supports responses
 containing either `data[0].b64_json` or `data[0].url`. It recognizes PNG,
 JPEG, and WebP payloads.
 
-- `--model` defaults to `$OPENAI_IMAGE_MODEL` or `gpt-image-1`; `--size`
-  defaults to `1024x1024`; `--timeout` defaults to 600 seconds.
+- `--model` defaults to `$OPENAI_IMAGE_MODEL` or `gpt-image-2`; `--size`
+  defaults to `$OPENAI_IMAGE_SIZE` or `832x832`; `--timeout` defaults to
+  600 seconds.
+- Size constraints differ per model: `gpt-image-2` accepts arbitrary
+  `WIDTHxHEIGHT` (both divisible by 16, aspect ratio within 1:3–3:1);
+  `gpt-image-1` accepts only `1024x1024`, `1536x1024`, or `1024x1536`. When
+  the user picks `gpt-image-1`, pass a size from that list explicitly.
 - `--quality` and `--response-format` are sent only when explicitly passed,
   because not every provider or model accepts them (OpenAI's `gpt-image-1`
   rejects `response_format`, for example). Leave them off unless the user's

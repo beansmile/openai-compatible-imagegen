@@ -212,8 +212,12 @@ def parse_args():
     prompt_source.add_argument("--prompt")
     prompt_source.add_argument("--prompt-file", type=Path, help="Read the prompt from a UTF-8 text file.")
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--model", default=os.environ.get("OPENAI_IMAGE_MODEL", "gpt-image-1"))
-    parser.add_argument("--size", default="1024x1024")
+    parser.add_argument("--model", default=os.environ.get("OPENAI_IMAGE_MODEL", "gpt-image-2"))
+    # gpt-image-2 accepts arbitrary WIDTHxHEIGHT (both divisible by 16, total
+    # pixels >= ~655k), so 832x832 is a compact square just above that floor.
+    # gpt-image-1 only accepts 1024x1024 / 1536x1024 / 1024x1536 — pass --size
+    # explicitly when targeting it.
+    parser.add_argument("--size", default=os.environ.get("OPENAI_IMAGE_SIZE", "832x832"))
     parser.add_argument("--quality", default=None, choices=("low", "medium", "high", "auto"),
                         help="Omitted from the request unless set.")
     parser.add_argument("--response-format", default=None, choices=("b64_json", "url"),

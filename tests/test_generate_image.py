@@ -49,8 +49,8 @@ def make_args(**overrides):
     defaults = {
         "prompt": "a cat",
         "prompt_file": None,
-        "model": "gpt-image-1",
-        "size": "1024x1024",
+        "model": "gpt-image-2",
+        "size": "832x832",
         "quality": None,
         "response_format": None,
     }
@@ -83,7 +83,22 @@ class GenerateImageTest(unittest.TestCase):
 
     def test_payload_omits_optional_parameters_by_default(self):
         payload = generate_image.build_payload("a cat", make_args())
-        self.assertEqual({"model": "gpt-image-1", "prompt": "a cat", "n": 1, "size": "1024x1024"}, payload)
+        self.assertEqual({"model": "gpt-image-2", "prompt": "a cat", "n": 1, "size": "832x832"}, payload)
+
+    def test_builtin_model_and_size_defaults(self):
+        argv = ["prog", "--prompt", "x", "--output", "o.png"]
+        with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(sys, "argv", argv):
+            args = generate_image.parse_args()
+        self.assertEqual("gpt-image-2", args.model)
+        self.assertEqual("832x832", args.size)
+
+    def test_model_and_size_defaults_come_from_environment(self):
+        argv = ["prog", "--prompt", "x", "--output", "o.png"]
+        env = {"OPENAI_IMAGE_MODEL": "custom-model", "OPENAI_IMAGE_SIZE": "1024x1024"}
+        with mock.patch.dict(os.environ, env), mock.patch.object(sys, "argv", argv):
+            args = generate_image.parse_args()
+        self.assertEqual("custom-model", args.model)
+        self.assertEqual("1024x1024", args.size)
 
     def test_payload_includes_optional_parameters_when_set(self):
         payload = generate_image.build_payload("a cat", make_args(quality="high", response_format="b64_json"))

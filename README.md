@@ -88,7 +88,8 @@ export OPENAI_API_KEY="<your key>"
 Optional:
 
 ```bash
-export OPENAI_IMAGE_MODEL="gpt-image-1"   # default model; override per-request with --model
+export OPENAI_IMAGE_MODEL="gpt-image-2"   # default model; override per-request with --model
+export OPENAI_IMAGE_SIZE="832x832"        # default size; override per-request with --size
 ```
 
 Add the exports to your shell profile (`~/.zshrc`, `~/.bashrc`, …) to make
@@ -116,11 +117,15 @@ python3 scripts/generate_image.py \
   --output outputs/lighthouse.png
 ```
 
-Options: `--model`, `--size` (default `1024x1024`), `--quality`,
-`--response-format`, `--prompt-file` (for prompts with tricky quoting),
-`--timeout` (seconds, default 600). `--quality` and `--response-format` are
-only sent to the API when explicitly passed, since not every provider accepts
-them.
+Options: `--model` (default `gpt-image-2`), `--size` (default `832x832`),
+`--quality`, `--response-format`, `--prompt-file` (for prompts with tricky
+quoting), `--timeout` (seconds, default 600). `--quality` and
+`--response-format` are only sent to the API when explicitly passed, since
+not every provider accepts them.
+
+Note on sizes: `gpt-image-2` accepts arbitrary `WIDTHxHEIGHT` (both divisible
+by 16); `gpt-image-1` only accepts `1024x1024`, `1536x1024`, or `1024x1536`,
+so pass one of those explicitly if you switch the model to it.
 
 Generation through relay providers can take several minutes. The client
 prints a progress note to stderr every 30 seconds while waiting, so a slow
