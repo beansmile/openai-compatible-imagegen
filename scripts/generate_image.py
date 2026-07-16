@@ -6,6 +6,7 @@ import json
 import os
 import struct
 import sys
+import threading
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -60,7 +61,25 @@ def build_payload(prompt, args):
     return payload
 
 
-def api_request(base_url, api_key, payload):
+def start_heartbeat(label, interval=30):
+    """Print a liveness note to stderr every `interval` seconds until stopped.
+
+    Relay providers can take minutes to respond; without output, a supervising
+    agent cannot tell a slow request from a hung one.
+    """
+    stop = threading.Event()
+
+    def beat():
+        elapsed = 0
+        while not stop.wait(interval):
+            elapsed += interval
+            print(f"note: still waiting for {label} ({elapsed}s elapsed)...", file=sys.stderr, flush=True)
+
+    threading.Thread(target=beat, daemon=True).start()
+    return stop
+
+
+def api_request(base_url, api_key, payload, timeout):
     request = urllib.request.Request(
         generation_endpoint(base_url),
         data=json.dumps(payload).encode("utf-8"),
@@ -72,20 +91,29 @@ def api_request(base_url, api_key, payload):
         },
         method="POST",
     )
+    print("note: request sent; generation through relay providers can take several minutes...",
+          file=sys.stderr, flush=True)
+    stop = start_heartbeat("the image API")
     try:
-        with urllib.request.urlopen(request, timeout=300) as response:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
             return json.load(response)
     except urllib.error.HTTPError as error:
         detail = error.read().decode("utf-8", errors="replace")
         raise ApiError(error.code, detail, api_key) from error
     except urllib.error.URLError as error:
         raise RuntimeError(f"Unable to reach image API: {redact(str(error.reason), api_key)}") from error
+    finally:
+        stop.set()
 
 
-def download_image(url):
+def download_image(url, timeout=300):
     request = urllib.request.Request(url, headers={"Accept": "image/*", "User-Agent": USER_AGENT})
-    with urllib.request.urlopen(request, timeout=300) as response:
-        return response.read()
+    stop = start_heartbeat("the image download")
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            return response.read()
+    finally:
+        stop.set()
 
 
 def extract_image_bytes(response):
@@ -190,6 +218,8 @@ def parse_args():
                         help="Omitted from the request unless set.")
     parser.add_argument("--response-format", default=None, choices=("b64_json", "url"),
                         help="Omitted from the request unless set.")
+    parser.add_argument("--timeout", type=int, default=600,
+                        help="HTTP timeout in seconds for the generation request (default: 600).")
     return parser.parse_args()
 
 
@@ -209,7 +239,7 @@ def main():
     try:
         prompt = resolve_prompt(args)
         base_url, api_key = load_config()
-        response = api_request(base_url, api_key, build_payload(prompt, args))
+        response = api_request(base_url, api_key, build_payload(prompt, args), args.timeout)
         metadata = write_validated_image(extract_image_bytes(response), args.output)
         print(json.dumps(metadata, ensure_ascii=False))
     except (OSError, RuntimeError, ValueError, urllib.error.URLError) as error:

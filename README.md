@@ -117,15 +117,21 @@ python3 scripts/generate_image.py \
 ```
 
 Options: `--model`, `--size` (default `1024x1024`), `--quality`,
-`--response-format`, `--prompt-file` (for prompts with tricky quoting).
-`--quality` and `--response-format` are only sent to the API when explicitly
-passed, since not every provider accepts them.
+`--response-format`, `--prompt-file` (for prompts with tricky quoting),
+`--timeout` (seconds, default 600). `--quality` and `--response-format` are
+only sent to the API when explicitly passed, since not every provider accepts
+them.
+
+Generation through relay providers can take several minutes. The client
+prints a progress note to stderr every 30 seconds while waiting, so a slow
+request is distinguishable from a hung one.
 
 ## Troubleshooting
 
 | Symptom | Fix |
 | --- | --- |
 | `OPENAI_BASE_URL … not set` | Run the printed `export` lines, restart the agent session so it inherits them. |
+| Process killed after ~1-2 min with no output | Your agent's command timeout fired, not a client error. Rerun with a longer timeout or in a background/persistent shell. |
 | HTTP 400 about an unknown parameter | Drop the optional flag (`--quality` / `--response-format`) you passed. |
 | HTTP 401 / 403 | Key is wrong or lacks image permission on your gateway. |
 | Cloudflare 403 / error 1010 | The client already sends a browser User-Agent; if it persists, the block is provider-side. |

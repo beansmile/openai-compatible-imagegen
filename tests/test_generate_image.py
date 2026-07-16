@@ -1,10 +1,13 @@
 import argparse
 import base64
 import importlib.util
+import io
 import json
 import os
 import struct
+import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -112,6 +115,29 @@ class GenerateImageTest(unittest.TestCase):
         with mock.patch.object(generate_image.urllib.request, "urlopen", return_value=response):
             result = generate_image.extract_image_bytes({"data": [{"url": "https://example.test/image.png"}]})
         self.assertEqual(png_bytes(), result)
+
+    def test_heartbeat_emits_progress_until_stopped(self):
+        stderr = io.StringIO()
+        with mock.patch.object(generate_image.sys, "stderr", stderr):
+            stop = generate_image.start_heartbeat("the test", interval=0.01)
+            deadline = time.monotonic() + 2
+            while "still waiting" not in stderr.getvalue() and time.monotonic() < deadline:
+                time.sleep(0.01)
+            stop.set()
+        self.assertIn("still waiting for the test", stderr.getvalue())
+
+    def test_timeout_flag_defaults_to_600_and_is_overridable(self):
+        with mock.patch.object(sys, "argv", ["prog", "--prompt", "x", "--output", "o.png"]):
+            self.assertEqual(600, generate_image.parse_args().timeout)
+        with mock.patch.object(sys, "argv", ["prog", "--prompt", "x", "--output", "o.png", "--timeout", "60"]):
+            self.assertEqual(60, generate_image.parse_args().timeout)
+
+    def test_api_request_uses_given_timeout(self):
+        response = mock.MagicMock()
+        response.__enter__.return_value = io.StringIO('{"data": []}')
+        with mock.patch.object(generate_image.urllib.request, "urlopen", return_value=response) as urlopen:
+            generate_image.api_request("https://example.test/v1", "key", {"prompt": "x"}, timeout=123)
+        self.assertEqual(123, urlopen.call_args.kwargs["timeout"])
 
     def test_redacts_api_key_from_http_error(self):
         secret = "secret-token-value"

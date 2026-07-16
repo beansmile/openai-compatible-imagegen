@@ -43,6 +43,15 @@ SKILL.md); do not create a new API wrapper for each task.
    Quote the prompt with single quotes. If the prompt itself contains single
    quotes or other characters that are awkward to escape, write it to a temp
    file instead and pass `--prompt-file <path>`.
+
+   **Generation can take several minutes**, especially through relay
+   providers. Run the command with an explicit long timeout (at least 10
+   minutes) or in a background / persistent shell so your harness's default
+   command timeout does not kill it mid-request. If a run is terminated at the
+   harness boundary with no output at all, that was a harness timeout — do not
+   diagnose it as a client or provider failure; rerun with a longer window
+   instead of switching approaches. The client prints a progress note to
+   stderr every 30 seconds so you can tell a slow request from a hung one.
 5. Read the JSON result and verify the reported path exists. Visually inspect
    the image before claiming success.
 6. Display the image using its absolute path and report format, dimensions,
@@ -55,7 +64,7 @@ containing either `data[0].b64_json` or `data[0].url`. It recognizes PNG,
 JPEG, and WebP payloads.
 
 - `--model` defaults to `$OPENAI_IMAGE_MODEL` or `gpt-image-1`; `--size`
-  defaults to `1024x1024`.
+  defaults to `1024x1024`; `--timeout` defaults to 600 seconds.
 - `--quality` and `--response-format` are sent only when explicitly passed,
   because not every provider or model accepts them (OpenAI's `gpt-image-1`
   rejects `response_format`, for example). Leave them off unless the user's
