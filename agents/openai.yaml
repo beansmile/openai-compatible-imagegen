@@ -1,0 +1,4 @@
+interface:
+  display_name: "OpenAI-Compatible Image Generator"
+  short_description: "Generate images through your own compatible API"
+  default_prompt: "Use $openai-compatible-imagegen to generate an image through my configured API."
