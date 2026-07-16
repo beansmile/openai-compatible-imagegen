@@ -26,6 +26,13 @@ curl -fsSL https://raw.githubusercontent.com/beansmile/openai-compatible-imagege
 
 Re-running the installer updates an existing install (`git pull`).
 
+If HTTPS access to github.com is unreliable from your network, point the
+installer at the SSH URL or a mirror:
+
+```bash
+curl -fsSL <installer-url-or-local-path> | IMAGEGEN_REPO_URL="git@github.com:beansmile/openai-compatible-imagegen.git" bash
+```
+
 ### Option B — let your agent install it
 
 Paste this into your Claude Code / Codex session:

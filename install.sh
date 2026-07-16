@@ -11,8 +11,10 @@
 set -euo pipefail
 
 REPO="beansmile/openai-compatible-imagegen"
-REPO_URL="https://github.com/${REPO}.git"
-TARBALL_URL="https://github.com/${REPO}/archive/refs/heads/main.tar.gz"
+# Override these if github.com is unreachable from your network, e.g. point
+# IMAGEGEN_REPO_URL at a mirror or use the SSH URL git@github.com:...
+REPO_URL="${IMAGEGEN_REPO_URL:-https://github.com/${REPO}.git}"
+TARBALL_URL="${IMAGEGEN_TARBALL_URL:-https://github.com/${REPO}/archive/refs/heads/main.tar.gz}"
 SKILL_NAME="openai-compatible-imagegen"
 
 usage() { sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; }
